@@ -67,6 +67,13 @@ flutter:
   #   - images/a_dot_ham.jpeg
   assets:
     - assets/compass.png
+    - assets/images/clear.jpg
+    - assets/images/cloud.jpg
+    - assets/images/drizzle.jpg
+    - assets/images/fog.jpg
+    - assets/images/rain.jpg
+    - assets/images/snow.jpg
+    - assets/images/thunderstorm.jpg
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

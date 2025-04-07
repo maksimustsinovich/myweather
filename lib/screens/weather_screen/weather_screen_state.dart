@@ -8,7 +8,7 @@ import 'package:weather_icons/weather_icons.dart';
 
 class WeatherScreenState extends State<WeatherScreen> {
   final String apiKey = '21cc003fb684d8f02f4fefabc56c390f';
-  final String city = 'Pekin';
+  final String city = 'Paris';
   Map<String, dynamic>? weatherData;
 
   @override
@@ -40,33 +40,43 @@ class WeatherScreenState extends State<WeatherScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Погодные показатели')),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child:
-            weatherData == null
-                ? const Center(child: CircularProgressIndicator())
-                : Column(
-                  children: [
-                    _buildHeaderTile(),
-                    const SizedBox(height: 16),
-                    Expanded(
-                      child: GridView.builder(
-                        gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2,
-                              crossAxisSpacing: 16.0,
-                              mainAxisSpacing: 16.0,
-                              childAspectRatio: 1.0,
-                            ),
-                        itemCount: 6,
-                        itemBuilder: (context, index) {
-                          return _buildWeatherTile(index);
-                        },
-                      ),
+      body: Container(
+        decoration: BoxDecoration(
+          image: DecorationImage(
+            image: _getBackgroundImage(),
+            fit: BoxFit.cover,
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.only(top: 50.0),
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child:
+                weatherData == null
+                    ? const Center(child: CircularProgressIndicator())
+                    : Column(
+                      children: [
+                        _buildHeaderTile(),
+                        const SizedBox(height: 2),
+                        Expanded(
+                          child: GridView.builder(
+                            gridDelegate:
+                                const SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 2,
+                                  crossAxisSpacing: 16.0,
+                                  mainAxisSpacing: 16.0,
+                                  childAspectRatio: 1.0,
+                                ),
+                            itemCount: 6,
+                            itemBuilder: (context, index) {
+                              return _buildWeatherTile(index);
+                            },
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
+          ),
+        ),
       ),
     );
   }
@@ -80,7 +90,6 @@ class WeatherScreenState extends State<WeatherScreen> {
     final date = _getFormattedDate();
     final weatherDescription =
         weatherData?['weather'][0]['description'] ?? 'Неизвестно';
-
     final iconCode = weatherData?['weather'][0]['icon'] ?? '';
     final isDayTime = _isDayTime(iconCode);
     final weatherIcon = _getWeatherIcon(
@@ -90,6 +99,7 @@ class WeatherScreenState extends State<WeatherScreen> {
 
     return Card(
       elevation: 4.0,
+      color: Colors.white.withValues(alpha: 0.7),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -256,6 +266,7 @@ class WeatherScreenState extends State<WeatherScreen> {
 
     return Card(
       elevation: 4.0,
+      color: Colors.white.withValues(alpha: 0.7),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
       child: Column(
         children: [
@@ -317,6 +328,28 @@ class WeatherScreenState extends State<WeatherScreen> {
       );
     }
     return const SizedBox.shrink();
+  }
+
+  ImageProvider _getBackgroundImage() {
+    final weatherId = weatherData?['weather'][0]['id'] ?? 0;
+
+    if (weatherId >= 200 && weatherId < 300) {
+      return AssetImage('assets/images/thunderstorm.jpg');
+    } else if (weatherId >= 300 && weatherId < 400) {
+      return AssetImage('assets/images/drizzle.jpg');
+    } else if (weatherId >= 500 && weatherId < 600) {
+      return AssetImage('assets/images/rain.jpg');
+    } else if (weatherId >= 600 && weatherId < 700) {
+      return AssetImage('assets/images/snow.jpg');
+    } else if (weatherId >= 700 && weatherId < 800) {
+      return AssetImage('assets/images/fog.jpg');
+    } else if (weatherId == 800) {
+      return AssetImage('assets/images/clear.jpg'); 
+    } else if (weatherId > 800 && weatherId <= 804) {
+      return AssetImage('assets/images/cloud.jpg');
+    } else {
+      return AssetImage('assets/images/clear.jpg'); 
+    }
   }
 
   Widget _buildCompass(int degrees) {
