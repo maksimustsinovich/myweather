@@ -218,7 +218,7 @@ class WeatherScreenState extends State<WeatherScreen> {
   }
 
   String _getFormattedDate(int timestamp) {
-    final dateTime = DateTime.fromMicrosecondsSinceEpoch(timestamp * 1000000);
+    final dateTime = DateTime.fromMillisecondsSinceEpoch(timestamp * 1000);
     final formatter = DateFormat('d MMMM y, EEEE', 'ru');
     return formatter.format(dateTime);
   }
