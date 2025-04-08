@@ -58,9 +58,35 @@ class WeatherIconHelper {
     }
 
     // Group 7xx: Atmosphere
-    if (weatherId >= WeatherConstants.mist &&
-        weatherId <= WeatherConstants.tornado) {
+    if (weatherId == WeatherConstants.mist) {
+      return isDaytime ? WeatherIcons.day_haze : WeatherIcons.fog; 
+    }
+    if (weatherId == WeatherConstants.smoke) {
+      return WeatherIcons.smoke; 
+    }
+    if (weatherId == WeatherConstants.haze) {
+      return isDaytime ? WeatherIcons.day_haze : WeatherIcons.fog;
+    }
+    if (weatherId == WeatherConstants.sandDustWhirls) {
+      return WeatherIcons.sandstorm;
+    }
+    if (weatherId == WeatherConstants.fog) {
       return WeatherIcons.fog;
+    }
+    if (weatherId == WeatherConstants.sand) {
+      return WeatherIcons.sandstorm; 
+    }
+    if (weatherId == WeatherConstants.dust) {
+      return WeatherIcons.dust;
+    }
+    if (weatherId == WeatherConstants.volcanicAsh) {
+      return WeatherIcons.volcano;
+    }
+    if (weatherId == WeatherConstants.squalls) {
+      return WeatherIcons.strong_wind; 
+    }
+    if (weatherId == WeatherConstants.tornado) {
+      return WeatherIcons.tornado;
     }
 
     // Group 800: Clear
@@ -82,7 +108,6 @@ class WeatherIconHelper {
       return isDaytime ? WeatherIcons.cloudy : WeatherIcons.cloudy;
     }
 
-    // Default case
     return WeatherIcons.na;
   }
 }
