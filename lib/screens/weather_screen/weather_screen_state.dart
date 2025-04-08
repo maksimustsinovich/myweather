@@ -38,26 +38,35 @@ class WeatherScreenState extends State<WeatherScreen> {
     }
   }
 
+  Future<void> _refreshWeatherData() async {
+    setState(() {
+      weatherData = null;
+    });
+
+    await fetchWeatherData();
+  }
+
   @override
   Widget build(BuildContext context) {
     final weatherId = weatherData?['weather'][0]['id'] ?? 0;
 
     return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          image: DecorationImage(
-            image: WeatherBackgroundHelper.getBackgroundImage(weatherId),
-            fit: BoxFit.cover,
+      body: RefreshIndicator(
+        onRefresh: _refreshWeatherData,
+        child: Container(
+          decoration: BoxDecoration(
+            image: DecorationImage(
+              image: WeatherBackgroundHelper.getBackgroundImage(weatherId),
+              fit: BoxFit.cover,
+            ),
           ),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.only(top: 50.0),
           child: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child:
-                weatherData == null
-                    ? const Center(child: CircularProgressIndicator())
-                    : Column(
+            padding: const EdgeInsets.only(top: 50.0),
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: weatherData == null
+                  ? const Center(child: CircularProgressIndicator())
+                  : Column(
                       children: [
                         _buildHeaderTile(),
                         const SizedBox(height: 2),
@@ -65,11 +74,11 @@ class WeatherScreenState extends State<WeatherScreen> {
                           child: GridView.builder(
                             gridDelegate:
                                 const SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: 2,
-                                  crossAxisSpacing: 16.0,
-                                  mainAxisSpacing: 16.0,
-                                  childAspectRatio: 1.0,
-                                ),
+                              crossAxisCount: 2,
+                              crossAxisSpacing: 16.0,
+                              mainAxisSpacing: 16.0,
+                              childAspectRatio: 1.0,
+                            ),
                             itemCount: widget.parameters.length,
                             itemBuilder: (context, index) {
                               return _buildCustomWeatherTile(index);
@@ -78,6 +87,7 @@ class WeatherScreenState extends State<WeatherScreen> {
                         ),
                       ],
                     ),
+            ),
           ),
         ),
       ),
@@ -106,7 +116,8 @@ class WeatherScreenState extends State<WeatherScreen> {
           _buildCompass(weatherData?['wind']['deg'] ?? 0),
         );
       case 'humidity':
-        return _createTile('Влажность', '${weatherData?['main']['humidity']}%');
+        return _createTile(
+            'Влажность', '${weatherData?['main']['humidity']}%');
       case 'pressure':
         return _createTile(
           'Давление',
