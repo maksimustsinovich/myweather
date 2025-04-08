@@ -64,29 +64,30 @@ class WeatherScreenState extends State<WeatherScreen> {
             padding: const EdgeInsets.only(top: 50.0),
             child: Padding(
               padding: const EdgeInsets.all(8.0),
-              child: weatherData == null
-                  ? const Center(child: CircularProgressIndicator())
-                  : Column(
-                      children: [
-                        _buildHeaderTile(),
-                        const SizedBox(height: 2),
-                        Expanded(
-                          child: GridView.builder(
-                            gridDelegate:
-                                const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2,
-                              crossAxisSpacing: 16.0,
-                              mainAxisSpacing: 16.0,
-                              childAspectRatio: 1.0,
+              child:
+                  weatherData == null
+                      ? const Center(child: CircularProgressIndicator())
+                      : Column(
+                        children: [
+                          _buildHeaderTile(),
+                          const SizedBox(height: 2),
+                          Expanded(
+                            child: GridView.builder(
+                              gridDelegate:
+                                  const SliverGridDelegateWithFixedCrossAxisCount(
+                                    crossAxisCount: 2,
+                                    crossAxisSpacing: 16.0,
+                                    mainAxisSpacing: 16.0,
+                                    childAspectRatio: 1.0,
+                                  ),
+                              itemCount: widget.parameters.length,
+                              itemBuilder: (context, index) {
+                                return _buildCustomWeatherTile(index);
+                              },
                             ),
-                            itemCount: widget.parameters.length,
-                            itemBuilder: (context, index) {
-                              return _buildCustomWeatherTile(index);
-                            },
                           ),
-                        ),
-                      ],
-                    ),
+                        ],
+                      ),
             ),
           ),
         ),
@@ -116,8 +117,7 @@ class WeatherScreenState extends State<WeatherScreen> {
           _buildCompass(weatherData?['wind']['deg'] ?? 0),
         );
       case 'humidity':
-        return _createTile(
-            'Влажность', '${weatherData?['main']['humidity']}%');
+        return _createTile('Влажность', '${weatherData?['main']['humidity']}%');
       case 'pressure':
         return _createTile(
           'Давление',
@@ -167,7 +167,7 @@ class WeatherScreenState extends State<WeatherScreen> {
 
   Widget _buildHeaderTile() {
     final cityName = weatherData?['name'] ?? 'Город';
-    final date = _getFormattedDate();
+    final date = _getFormattedDate(weatherData?['dt']);
     final weatherDescription =
         weatherData?['weather'][0]['description'] ?? 'Неизвестно';
     final iconCode = weatherData?['weather'][0]['icon'] ?? '';
@@ -217,10 +217,10 @@ class WeatherScreenState extends State<WeatherScreen> {
     );
   }
 
-  String _getFormattedDate() {
-    final now = DateTime.now();
+  String _getFormattedDate(int timestamp) {
+    final dateTime = DateTime.fromMicrosecondsSinceEpoch(timestamp * 1000000);
     final formatter = DateFormat('d MMMM y, EEEE', 'ru');
-    return formatter.format(now);
+    return formatter.format(dateTime);
   }
 
   Widget _buildValueWidget(dynamic value) {
