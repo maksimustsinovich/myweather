@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
+import 'package:myweather/helpers/weather_background_helper.dart';
 import 'package:myweather/helpers/weather_icon_helper.dart';
 import 'package:myweather/screens/weather_screen/weather_screen.dart';
 
@@ -39,11 +40,13 @@ class WeatherScreenState extends State<WeatherScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final weatherId = weatherData?['weather'][0]['id'] ?? 0;
+
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(
           image: DecorationImage(
-            image: _getBackgroundImage(),
+            image: WeatherBackgroundHelper.getBackgroundImage(weatherId),
             fit: BoxFit.cover,
           ),
         ),
@@ -220,28 +223,6 @@ class WeatherScreenState extends State<WeatherScreen> {
       return value;
     }
     return const SizedBox.shrink();
-  }
-
-  ImageProvider _getBackgroundImage() {
-    final weatherId = weatherData?['weather'][0]['id'] ?? 0;
-
-    if (weatherId >= 200 && weatherId < 300) {
-      return AssetImage('assets/images/thunderstorm.jpg');
-    } else if (weatherId >= 300 && weatherId < 400) {
-      return AssetImage('assets/images/drizzle.jpg');
-    } else if (weatherId >= 500 && weatherId < 600) {
-      return AssetImage('assets/images/rain.jpg');
-    } else if (weatherId >= 600 && weatherId < 700) {
-      return AssetImage('assets/images/snow.jpg');
-    } else if (weatherId >= 700 && weatherId < 800) {
-      return AssetImage('assets/images/fog.jpg');
-    } else if (weatherId == 800) {
-      return AssetImage('assets/images/clear.jpg');
-    } else if (weatherId > 800 && weatherId <= 804) {
-      return AssetImage('assets/images/cloud.jpg');
-    } else {
-      return AssetImage('assets/images/clear.jpg');
-    }
   }
 
   Widget _buildCompass(int degrees) {
