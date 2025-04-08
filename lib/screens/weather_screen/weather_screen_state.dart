@@ -5,7 +5,6 @@ import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:myweather/helpers/weather_icon_helper.dart';
 import 'package:myweather/screens/weather_screen/weather_screen.dart';
-import 'package:weather_icons/weather_icons.dart';
 
 class WeatherScreenState extends State<WeatherScreen> {
   final String apiKey = '21cc003fb684d8f02f4fefabc56c390f';
