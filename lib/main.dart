@@ -13,10 +13,19 @@ class WeatherApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final customParameters = [
+      'temperature',
+      'feelsLike',
+      'windSpeed',
+      'windDirection',
+      'humidity',
+      'pressure',
+    ];
+
     return MaterialApp(
       title: 'Погода',
       theme: ThemeData(primarySwatch: Colors.blue),
-      home: const WeatherScreen(),
+      home: WeatherScreen(parameters: customParameters),
     );
   }
 }

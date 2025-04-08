@@ -67,9 +67,9 @@ class WeatherScreenState extends State<WeatherScreen> {
                                   mainAxisSpacing: 16.0,
                                   childAspectRatio: 1.0,
                                 ),
-                            itemCount: 6,
+                            itemCount: widget.parameters.length,
                             itemBuilder: (context, index) {
-                              return _buildWeatherTile(index);
+                              return _buildCustomWeatherTile(index);
                             },
                           ),
                         ),
@@ -77,6 +77,72 @@ class WeatherScreenState extends State<WeatherScreen> {
                     ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildCustomWeatherTile(int index) {
+    final parameter = widget.parameters[index];
+
+    switch (parameter) {
+      case 'temperature':
+        return _createTile('Температура', '${weatherData?['main']['temp']}°C');
+      case 'feelsLike':
+        return _createTile(
+          'Ощущается как',
+          '${weatherData?['main']['feels_like']}°C',
+        );
+      case 'windSpeed':
+        return _createTile(
+          'Скорость ветра',
+          '${weatherData?['wind']['speed']} м/с',
+        );
+      case 'windDirection':
+        return _createTile(
+          'Направление ветра',
+          _buildCompass(weatherData?['wind']['deg'] ?? 0),
+        );
+      case 'humidity':
+        return _createTile('Влажность', '${weatherData?['main']['humidity']}%');
+      case 'pressure':
+        return _createTile(
+          'Давление',
+          '${weatherData?['main']['pressure']} мм рт. ст.',
+        );
+      default:
+        return _createTile('Неизвестный параметр', 'N/A');
+    }
+  }
+
+  Widget _createTile(String label, dynamic value) {
+    return Card(
+      elevation: 4.0,
+      color: Colors.white.withValues(alpha: 0.7),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
+      child: Column(
+        children: [
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+            decoration: const BoxDecoration(
+              color: Colors.blue,
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(12.0),
+                topRight: Radius.circular(12.0),
+              ),
+            ),
+            child: Text(
+              label,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+          ),
+          Expanded(child: Center(child: _buildValueWidget(value))),
+        ],
       ),
     );
   }
@@ -138,162 +204,81 @@ class WeatherScreenState extends State<WeatherScreen> {
   }
 
   IconData _getWeatherIcon(int weatherId, bool isDaytime) {
-    switch (weatherId) {
-      // Group 2xx: Thunderstorm
-      case 200:
-      case 201:
-      case 202:
-      case 210:
-      case 211:
-      case 212:
-      case 221:
-      case 230:
-      case 231:
-      case 232:
-        return isDaytime
-            ? WeatherIcons.day_thunderstorm
-            : WeatherIcons.night_thunderstorm;
-
-      // Group 3xx: Drizzle
-      case 300:
-      case 301:
-      case 302:
-      case 310:
-      case 311:
-      case 312:
-      case 313:
-      case 314:
-      case 321:
-        return isDaytime
-            ? WeatherIcons.day_sprinkle
-            : WeatherIcons.night_sprinkle;
-
-      // Group 5xx: Rain
-      case 500:
-      case 501:
-        return isDaytime
-            ? WeatherIcons.day_rain_mix
-            : WeatherIcons.night_rain_mix;
-      case 502:
-      case 503:
-      case 504:
-        return isDaytime ? WeatherIcons.day_rain : WeatherIcons.night_rain;
-      case 511:
-        return WeatherIcons.rain_mix;
-      case 520:
-      case 521:
-      case 522:
-      case 531:
-        return isDaytime
-            ? WeatherIcons.day_showers
-            : WeatherIcons.night_showers;
-
-      // Group 6xx: Snow
-      case 600:
-      case 601:
-      case 602:
-        return isDaytime ? WeatherIcons.day_snow : WeatherIcons.night_snow;
-      case 611:
-      case 612:
-      case 613:
-        return WeatherIcons.sleet;
-      case 615:
-      case 616:
-        return WeatherIcons.rain_mix;
-      case 620:
-      case 621:
-      case 622:
-        return isDaytime ? WeatherIcons.day_snow : WeatherIcons.night_snow;
-
-      // Group 7xx: Atmosphere
-      case 701:
-      case 711:
-      case 721:
-      case 731:
-      case 741:
-      case 751:
-      case 761:
-      case 762:
-      case 771:
-      case 781:
-        return WeatherIcons.fog;
-
-      // Group 800: Clear
-      case 800:
-        return isDaytime ? WeatherIcons.day_sunny : WeatherIcons.night_clear;
-
-      // Group 80x: Clouds
-      case 801:
-        return isDaytime ? WeatherIcons.day_cloudy : WeatherIcons.night_cloudy;
-      case 802:
-        return isDaytime
-            ? WeatherIcons.day_cloudy_gusts
-            : WeatherIcons.night_cloudy_gusts;
-      case 803:
-      case 804:
-        return isDaytime ? WeatherIcons.cloudy : WeatherIcons.cloudy;
-
-      // Default case
-      default:
-        return WeatherIcons.na;
+    // Group 2xx: Thunderstorm
+    if (weatherId >= 200 && weatherId <= 232) {
+      return isDaytime
+          ? WeatherIcons.day_thunderstorm
+          : WeatherIcons.night_thunderstorm;
     }
+
+    // Group 3xx: Drizzle
+    if (weatherId >= 300 && weatherId <= 321) {
+      return isDaytime
+          ? WeatherIcons.day_sprinkle
+          : WeatherIcons.night_sprinkle;
+    }
+
+    // Group 5xx: Rain
+    if (weatherId == 500 || weatherId == 501) {
+      return isDaytime
+          ? WeatherIcons.day_rain_mix
+          : WeatherIcons.night_rain_mix;
+    }
+    if (weatherId >= 502 && weatherId <= 504) {
+      return isDaytime ? WeatherIcons.day_rain : WeatherIcons.night_rain;
+    }
+    if (weatherId == 511) {
+      return WeatherIcons.rain_mix;
+    }
+    if (weatherId >= 520 && weatherId <= 531) {
+      return isDaytime ? WeatherIcons.day_showers : WeatherIcons.night_showers;
+    }
+
+    // Group 6xx: Snow
+    if (weatherId >= 600 && weatherId <= 602) {
+      return isDaytime ? WeatherIcons.day_snow : WeatherIcons.night_snow;
+    }
+    if (weatherId >= 611 && weatherId <= 613) {
+      return WeatherIcons.sleet;
+    }
+    if (weatherId == 615 || weatherId == 616) {
+      return WeatherIcons.rain_mix;
+    }
+    if (weatherId >= 620 && weatherId <= 622) {
+      return isDaytime ? WeatherIcons.day_snow : WeatherIcons.night_snow;
+    }
+
+    // Group 7xx: Atmosphere
+    if (weatherId >= 701 && weatherId <= 781) {
+      return WeatherIcons.fog;
+    }
+
+    // Group 800: Clear
+    if (weatherId == 800) {
+      return isDaytime ? WeatherIcons.day_sunny : WeatherIcons.night_clear;
+    }
+
+    // Group 80x: Clouds
+    if (weatherId == 801) {
+      return isDaytime ? WeatherIcons.day_cloudy : WeatherIcons.night_cloudy;
+    }
+    if (weatherId == 802) {
+      return isDaytime
+          ? WeatherIcons.day_cloudy_gusts
+          : WeatherIcons.night_cloudy_gusts;
+    }
+    if (weatherId == 803 || weatherId == 804) {
+      return isDaytime ? WeatherIcons.cloudy : WeatherIcons.cloudy;
+    }
+
+    // Default case
+    return WeatherIcons.na;
   }
 
   String _getFormattedDate() {
     final now = DateTime.now();
     final formatter = DateFormat('d MMMM y, EEEE', 'ru');
     return formatter.format(now);
-  }
-
-  Widget _buildWeatherTile(int index) {
-    final temperature = weatherData?['main']['temp'] ?? 'N/A';
-    final feelsLike = weatherData?['main']['feels_like'] ?? 'N/A';
-    final windSpeed = weatherData?['wind']['speed'] ?? 'N/A';
-    final windDirection = weatherData?['wind']['deg'] ?? 0;
-    final humidity = weatherData?['main']['humidity'] ?? 0;
-    final pressure = weatherData?['main']['pressure'] ?? 'N/A';
-
-    final List<Map<String, dynamic>> weatherTiles = [
-      {'label': 'Температура', 'value': '$temperature°C'},
-      {'label': 'Ощущается как', 'value': '$feelsLike°C'},
-      {'label': 'Скорость ветра', 'value': '$windSpeed м/с'},
-      {'label': 'Направление ветра', 'value': windDirection},
-      {'label': 'Влажность', 'value': humidity / 100},
-      {'label': 'Давление', 'value': '$pressure мм рт. ст.'},
-    ];
-
-    final data = weatherTiles[index];
-
-    return Card(
-      elevation: 4.0,
-      color: Colors.white.withValues(alpha: 0.7),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
-      child: Column(
-        children: [
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-            decoration: const BoxDecoration(
-              color: Colors.blue,
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(12.0),
-                topRight: Radius.circular(12.0),
-              ),
-            ),
-            child: Text(
-              data['label'],
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            ),
-          ),
-          Expanded(child: Center(child: _buildValueWidget(data['value']))),
-        ],
-      ),
-    );
   }
 
   Widget _buildValueWidget(dynamic value) {
@@ -303,29 +288,8 @@ class WeatherScreenState extends State<WeatherScreen> {
         textAlign: TextAlign.center,
         style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
       );
-    } else if (value is int) {
-      return _buildCompass(value);
-    } else if (value is double) {
-      return Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          SizedBox(
-            width: 80,
-            height: 80,
-            child: CircularProgressIndicator(
-              value: value,
-              strokeWidth: 8,
-              backgroundColor: Colors.grey[300],
-              color: Colors.blue,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            '${(value * 100).toInt()}%',
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-          ),
-        ],
-      );
+    } else if (value is Widget) {
+      return value;
     }
     return const SizedBox.shrink();
   }
@@ -344,11 +308,11 @@ class WeatherScreenState extends State<WeatherScreen> {
     } else if (weatherId >= 700 && weatherId < 800) {
       return AssetImage('assets/images/fog.jpg');
     } else if (weatherId == 800) {
-      return AssetImage('assets/images/clear.jpg'); 
+      return AssetImage('assets/images/clear.jpg');
     } else if (weatherId > 800 && weatherId <= 804) {
       return AssetImage('assets/images/cloud.jpg');
     } else {
-      return AssetImage('assets/images/clear.jpg'); 
+      return AssetImage('assets/images/clear.jpg');
     }
   }
 
