@@ -2,17 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:myweather/helpers/weather_background_helper.dart';
 import 'package:myweather/models/hourly_weather_model.dart';
-import 'package:myweather/widgets/pressure_chart.dart';
-import 'package:myweather/widgets/wind_chart.dart';
-import '../services/weather_service.dart';
-import '../widgets/hourly_weather_tile.dart';
-import '../widgets/hourly_weather_chart.dart';
-import '../widgets/forecast_day_selector.dart';
+import 'package:myweather/services/weather_service.dart';
+import 'package:myweather/widgets/forecast_day_selector.dart';
+import 'package:myweather/widgets/hourly_weather_tile.dart';
+
+// Импорт графиков из отдельной папки
+import 'package:myweather/widgets/charts/custom_hourly_weather_chart.dart';
+import 'package:myweather/widgets/charts/custom_pressure_chart.dart';
+import 'package:myweather/widgets/charts/custom_wind_chart.dart';
 
 class HourlyForecastScreen extends StatefulWidget {
   final String city;
 
-  const HourlyForecastScreen({super.key, required this.city});
+  const HourlyForecastScreen({Key? key, required this.city}) : super(key: key);
 
   @override
   State<HourlyForecastScreen> createState() => _HourlyForecastScreenState();
@@ -31,15 +33,17 @@ class _HourlyForecastScreenState extends State<HourlyForecastScreen> {
     loadForecast();
   }
 
+  /// Загружаем почасовой прогноз (данные каждые 3 часа)
   Future<void> loadForecast() async {
     try {
       final service = WeatherService();
       final result = await service.fetchHourlyForecast(widget.city);
-
+      // Получаем список уникальных дат
       final allDates = result
           .map((e) => DateFormat('yyyy-MM-dd').format(e.time))
           .toSet()
-          .toList();
+          .toList()
+        ..sort();
 
       setState(() {
         fullData = result;
@@ -55,7 +59,7 @@ class _HourlyForecastScreenState extends State<HourlyForecastScreen> {
 
   List<HourlyWeather> _filterByDate(String date) {
     return fullData
-        .where((e) => DateFormat('yyyy-MM-dd').format(e.time) == date)
+        .where((item) => DateFormat('yyyy-MM-dd').format(item.time) == date)
         .toList();
   }
 
@@ -70,9 +74,11 @@ class _HourlyForecastScreenState extends State<HourlyForecastScreen> {
     final weatherId = filtered.isNotEmpty ? filtered[0].weatherCode : 800;
 
     return Scaffold(
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
         title: Text('Прогноз — ${widget.city}'),
-        backgroundColor: Colors.blue,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
       ),
       body: loading
           ? const Center(child: CircularProgressIndicator())
@@ -83,67 +89,196 @@ class _HourlyForecastScreenState extends State<HourlyForecastScreen> {
                   fit: BoxFit.cover,
                 ),
               ),
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.only(bottom: 24),
-                child: Column(
-                  children: [
-                    const SizedBox(height: 8),
-                    ForecastDaySelector(
-                      dates: dates,
-                      selectedDate: selectedDate,
-                      onSelect: (newDate) {
-                        setState(() {
-                          selectedDate = newDate;
-                          filtered = _filterByDate(newDate);
-                        });
-                      },
-                    ),
-                    const SizedBox(height: 12),
-                    SizedBox(
-                      height: 130,
-                      child: ListView.builder(
-                        scrollDirection: Axis.horizontal,
-                        itemCount: filtered.length,
-                        itemBuilder: (_, i) =>
-                            HourlyWeatherTile(data: filtered[i]),
+              child: SafeArea(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.only(bottom: 24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const SizedBox(height: 12),
+                      // Блок выбора дат (с обновленным ForecastDaySelector)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Card(
+                          color: Colors.white.withOpacity(0.2),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          elevation: 0,
+                          child: Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: ForecastDaySelector(
+                              dates: dates,
+                              selectedDate: selectedDate,
+                              onSelect: (newDate) {
+                                setState(() {
+                                  selectedDate = newDate;
+                                  filtered = _filterByDate(newDate);
+                                });
+                              },
+                              fullData: fullData, // передаем весь список почасовых данных
+                            ),
+                          ),
+                        ),
                       ),
-                    ),
-                    HourlyWeatherChart(data: filtered),
-                    PressureChart(data: filtered),
-                    WindChart(data: filtered),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: _buildSummaryCard(),
-                    ),
-                  ],
+                      const SizedBox(height: 16),
+                      _buildHeaderCard(),
+                      const SizedBox(height: 16),
+                      _buildHourlyList(),
+                      const SizedBox(height: 16),
+                      // График температуры
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: CustomHourlyWeatherChart(data: filtered),
+                      ),
+                      const SizedBox(height: 12),
+                      // График давления
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: CustomPressureChart(data: filtered),
+                      ),
+                      const SizedBox(height: 12),
+                      // График ветра
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: CustomWindChart(data: filtered),
+                      ),
+                      const SizedBox(height: 16),
+                      _buildSummaryCard(),
+                    ],
+                  ),
                 ),
               ),
             ),
     );
   }
 
-  Widget _buildSummaryCard() {
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      color: Colors.white.withOpacity(0.8),
-      margin: const EdgeInsets.symmetric(vertical: 12),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            Text(
-              'Сегодня: ${filtered[0].description[0].toUpperCase()}${filtered[0].description.substring(1)}',
-              style: const TextStyle(fontSize: 16),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Макс: ${_maxTemp().round()}°C, Мин: ${_minTemp().round()}°C',
-              style: const TextStyle(fontSize: 16),
-            ),
-          ],
+  Widget _buildHourlyList() {
+    return SizedBox(
+      height: 140,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        itemCount: filtered.length,
+        itemBuilder: (_, i) => HourlyWeatherTile(data: filtered[i]),
+      ),
+    );
+  }
+
+  Widget _buildHeaderCard() {
+    if (filtered.isEmpty) return const SizedBox.shrink();
+
+    final now = filtered[0];
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Card(
+        color: Colors.white.withOpacity(0.3),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        elevation: 2,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                DateFormat('d MMMM, EEEE', 'ru').format(now.time),
+                style: const TextStyle(fontSize: 16, color: Colors.black87),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    '${now.temperature.round()}°C',
+                    style: const TextStyle(
+                        fontSize: 48,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87),
+                  ),
+                  const SizedBox(width: 12),
+                  Image.network(
+                    'https://openweathermap.org/img/wn/${now.icon}@2x.png',
+                    width: 50,
+                    height: 50,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Ощущается как ${now.feelsLike.round()}°C',
+                style: const TextStyle(fontSize: 16, color: Colors.black87),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                '${now.description[0].toUpperCase()}${now.description.substring(1)}',
+                style: const TextStyle(fontSize: 16, color: Colors.black87),
+              ),
+            ],
+          ),
         ),
       ),
+    );
+  }
+
+  Widget _buildSummaryCard() {
+    if (filtered.isEmpty) return const SizedBox.shrink();
+
+    final now = filtered[0];
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Card(
+        color: Colors.white.withOpacity(0.3),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        elevation: 2,
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            children: [
+              const Text(
+                'Подробности',
+                style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                    color: Colors.black87),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _metricCard('Давление', '${now.pressure} гПа'),
+                  _metricCard('Ветер', '${now.windSpeed.round()} м/с'),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _metricCard('Макс.', '${_maxTemp().round()}°'),
+                  _metricCard('Мин.', '${_minTemp().round()}°'),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _metricCard(String label, String value) {
+    return Column(
+      children: [
+        Text(
+          label,
+          style: const TextStyle(fontSize: 14, color: Colors.black87),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: const TextStyle(
+              fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black),
+        ),
+      ],
     );
   }
 }

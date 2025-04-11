@@ -1,15 +1,33 @@
 import 'package:shared_preferences/shared_preferences.dart';
 
 class CityStorageService {
-  static const String _key = 'selectedCity';
+  static const _key = 'savedCities';
 
-  Future<void> saveCity(String cityName) async {
+  Future<List<String>> loadCities() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_key, cityName);
+    return prefs.getStringList(_key) ?? [];
   }
 
-  Future<String?> loadCity() async {
+  Future<void> saveCity(String city) async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_key);
+    final existing = prefs.getStringList(_key) ?? [];
+
+    if (!existing.contains(city)) {
+      existing.add(city);
+      await prefs.setStringList(_key, existing);
+    }
+  }
+
+  Future<String?> getLastCity() async {
+  final cities = await loadCities();
+  return cities.isNotEmpty ? cities.last : null;
+}
+
+
+  Future<void> deleteCity(String city) async {
+    final prefs = await SharedPreferences.getInstance();
+    final existing = prefs.getStringList(_key) ?? [];
+    existing.remove(city);
+    await prefs.setStringList(_key, existing);
   }
 }

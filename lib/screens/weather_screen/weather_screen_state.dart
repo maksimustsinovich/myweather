@@ -24,7 +24,7 @@ class WeatherScreenState extends State<WeatherScreen> {
   }
 
   Future<void> _loadCityAndFetchWeather() async {
-    final storedCity = await CityStorageService().loadCity();
+    final storedCity = await CityStorageService().getLastCity();
     if (storedCity != null) {
       setState(() {
         city = storedCity;
