@@ -6,7 +6,7 @@ import 'package:myweather/models/hourly_weather_model.dart';
 class CustomPressureChart extends StatelessWidget {
   final List<HourlyWeather> data;
 
-  const CustomPressureChart({Key? key, required this.data}) : super(key: key);
+  const CustomPressureChart({super.key, required this.data});
 
   @override
   Widget build(BuildContext context) {

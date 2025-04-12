@@ -43,6 +43,7 @@ dependencies:
   latlong2: ^0.9.1
   flutter_map: ^8.1.1
   shared_preferences: ^2.5.3
+  syncfusion_flutter_gauges: ^29.1.37
 
 
 dev_dependencies:

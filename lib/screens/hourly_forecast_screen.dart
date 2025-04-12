@@ -6,7 +6,6 @@ import 'package:myweather/services/weather_service.dart';
 import 'package:myweather/widgets/forecast_day_selector.dart';
 import 'package:myweather/widgets/hourly_weather_tile.dart';
 
-// Импорт графиков из отдельной папки
 import 'package:myweather/widgets/charts/custom_hourly_weather_chart.dart';
 import 'package:myweather/widgets/charts/custom_pressure_chart.dart';
 import 'package:myweather/widgets/charts/custom_wind_chart.dart';
@@ -14,7 +13,7 @@ import 'package:myweather/widgets/charts/custom_wind_chart.dart';
 class HourlyForecastScreen extends StatefulWidget {
   final String city;
 
-  const HourlyForecastScreen({Key? key, required this.city}) : super(key: key);
+  const HourlyForecastScreen({super.key, required this.city});
 
   @override
   State<HourlyForecastScreen> createState() => _HourlyForecastScreenState();
@@ -33,12 +32,10 @@ class _HourlyForecastScreenState extends State<HourlyForecastScreen> {
     loadForecast();
   }
 
-  /// Загружаем почасовой прогноз (данные каждые 3 часа)
   Future<void> loadForecast() async {
     try {
       final service = WeatherService();
       final result = await service.fetchHourlyForecast(widget.city);
-      // Получаем список уникальных дат
       final allDates = result
           .map((e) => DateFormat('yyyy-MM-dd').format(e.time))
           .toSet()

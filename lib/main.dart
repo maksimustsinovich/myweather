@@ -15,11 +15,10 @@ class WeatherApp extends StatelessWidget {
   Widget build(BuildContext context) {
     final customParameters = [
       'temperature',
-      'feelsLike',
-      'windSpeed',
-      'windDirection',
+      'feels_like',
       'humidity',
       'pressure',
+      'wind',
     ];
 
     return MaterialApp(

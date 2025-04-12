@@ -12,12 +12,12 @@ class ForecastDaySelector extends StatelessWidget {
   final List<HourlyWeather> fullData;   // Полный список почасовых прогнозов
 
   const ForecastDaySelector({
-    Key? key,
+    super.key,
     required this.dates,
     required this.selectedDate,
     required this.onSelect,
     required this.fullData,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -54,7 +54,7 @@ class ForecastDaySelector extends StatelessWidget {
         // Список дней (каждый день в отдельной строке)
         ...daysToShow.map((dateStr) {
           return _buildDayRow(context, dateStr);
-        }).toList(),
+        }),
         const SizedBox(height: 8),
         // Дополнительная кнопка "Прогноз на 5 дней" (если требуется)
         SizedBox(

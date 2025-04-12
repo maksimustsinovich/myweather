@@ -19,10 +19,9 @@ class CityStorageService {
   }
 
   Future<String?> getLastCity() async {
-  final cities = await loadCities();
-  return cities.isNotEmpty ? cities.last : null;
-}
-
+    final cities = await loadCities();
+    return cities.isNotEmpty ? cities.last : null;
+  }
 
   Future<void> deleteCity(String city) async {
     final prefs = await SharedPreferences.getInstance();

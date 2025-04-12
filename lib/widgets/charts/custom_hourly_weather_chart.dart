@@ -6,8 +6,7 @@ import 'package:myweather/models/hourly_weather_model.dart';
 class CustomHourlyWeatherChart extends StatelessWidget {
   final List<HourlyWeather> data;
 
-  const CustomHourlyWeatherChart({Key? key, required this.data})
-      : super(key: key);
+  const CustomHourlyWeatherChart({super.key, required this.data});
 
   @override
   Widget build(BuildContext context) {

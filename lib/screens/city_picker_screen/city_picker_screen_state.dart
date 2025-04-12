@@ -1,14 +1,8 @@
 import 'package:flutter/material.dart';
-import '../services/city_storage_service.dart';
+import 'package:myweather/screens/city_picker_screen/city_picker_screen.dart';
+import 'package:myweather/services/city_storage_service.dart';
 
-class CityPickerScreen extends StatefulWidget {
-  const CityPickerScreen({super.key});
-
-  @override
-  State<CityPickerScreen> createState() => _CityPickerScreenState();
-}
-
-class _CityPickerScreenState extends State<CityPickerScreen> {
+class CityPickerScreenState extends State<CityPickerScreen> {
   final TextEditingController _controller = TextEditingController();
   List<String> savedCities = [];
 
