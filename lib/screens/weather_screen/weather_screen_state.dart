@@ -5,16 +5,31 @@ import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:myweather/helpers/weather_background_helper.dart';
 import 'package:myweather/helpers/weather_icon_helper.dart';
+import 'package:myweather/screens/city_picker_screen.dart';
 import 'package:myweather/screens/weather_screen/weather_screen.dart';
+
+import 'package:myweather/screens/hourly_forecast_screen.dart';
+import 'package:myweather/services/city_storage_service.dart'; 
+
 
 class WeatherScreenState extends State<WeatherScreen> {
   final String apiKey = '21cc003fb684d8f02f4fefabc56c390f';
-  final String city = 'Paris';
+  String city = 'Москва'; // значение по умолчанию
   Map<String, dynamic>? weatherData;
 
   @override
   void initState() {
     super.initState();
+    _loadCityAndFetchWeather();
+  }
+
+  Future<void> _loadCityAndFetchWeather() async {
+    final storedCity = await CityStorageService().getLastCity();
+    if (storedCity != null) {
+      setState(() {
+        city = storedCity;
+      });
+    }
     fetchWeatherData();
   }
 
@@ -24,6 +39,10 @@ class WeatherScreenState extends State<WeatherScreen> {
 
     try {
       final response = await http.get(Uri.parse(url));
+      if (kDebugMode) {
+        print('📡 GET: $url');
+        print('🔢 Response: ${response.statusCode}');
+      }
       if (response.statusCode == 200) {
         setState(() {
           weatherData = json.decode(response.body);
@@ -33,7 +52,7 @@ class WeatherScreenState extends State<WeatherScreen> {
       }
     } catch (e) {
       if (kDebugMode) {
-        print(e);
+        print('❌ Exception: $e');
       }
     }
   }
@@ -42,7 +61,6 @@ class WeatherScreenState extends State<WeatherScreen> {
     setState(() {
       weatherData = null;
     });
-
     await fetchWeatherData();
   }
 
@@ -51,6 +69,27 @@ class WeatherScreenState extends State<WeatherScreen> {
     final weatherId = weatherData?['weather'][0]['id'] ?? 0;
 
     return Scaffold(
+      appBar: AppBar(
+        title: Text('Погода — $city'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.location_on),
+            tooltip: 'Выбрать город',
+            onPressed: () async {
+              final selected = await Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const CityPickerScreen()),
+              );
+              if (selected != null && selected is String) {
+                setState(() {
+                  city = selected;
+                });
+                fetchWeatherData();
+              }
+            },
+          ),
+        ],
+      ),
       body: RefreshIndicator(
         onRefresh: _refreshWeatherData,
         child: Container(
@@ -64,30 +103,29 @@ class WeatherScreenState extends State<WeatherScreen> {
             padding: const EdgeInsets.only(top: 50.0),
             child: Padding(
               padding: const EdgeInsets.all(8.0),
-              child:
-                  weatherData == null
-                      ? const Center(child: CircularProgressIndicator())
-                      : Column(
-                        children: [
-                          _buildHeaderTile(),
-                          const SizedBox(height: 2),
-                          Expanded(
-                            child: GridView.builder(
-                              gridDelegate:
-                                  const SliverGridDelegateWithFixedCrossAxisCount(
-                                    crossAxisCount: 2,
-                                    crossAxisSpacing: 16.0,
-                                    mainAxisSpacing: 16.0,
-                                    childAspectRatio: 1.0,
-                                  ),
-                              itemCount: widget.parameters.length,
-                              itemBuilder: (context, index) {
-                                return _buildCustomWeatherTile(index);
-                              },
+              child: weatherData == null
+                  ? const Center(child: CircularProgressIndicator())
+                  : Column(
+                      children: [
+                        _buildHeaderTile(),
+                        const SizedBox(height: 2),
+                        Expanded(
+                          child: GridView.builder(
+                            gridDelegate:
+                                const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 2,
+                              crossAxisSpacing: 16.0,
+                              mainAxisSpacing: 16.0,
+                              childAspectRatio: 1.0,
                             ),
+                            itemCount: widget.parameters.length,
+                            itemBuilder: (context, index) {
+                              return _buildCustomWeatherTile(index);
+                            },
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
+                    ),
             ),
           ),
         ),
@@ -131,7 +169,7 @@ class WeatherScreenState extends State<WeatherScreen> {
   Widget _createTile(String label, dynamic value) {
     return Card(
       elevation: 4.0,
-      color: Colors.white.withValues(alpha: 0.7),
+      color: Colors.white.withOpacity(0.7),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
       child: Column(
         children: [
@@ -179,7 +217,7 @@ class WeatherScreenState extends State<WeatherScreen> {
 
     return Card(
       elevation: 4.0,
-      color: Colors.white.withValues(alpha: 0.7),
+      color: Colors.white.withOpacity(0.7),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -207,6 +245,18 @@ class WeatherScreenState extends State<WeatherScreen> {
                     weatherDescription[0].toUpperCase() +
                         weatherDescription.substring(1),
                     style: TextStyle(fontSize: 16, color: Colors.grey[700]),
+                  ),
+                  TextButton.icon(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => HourlyForecastScreen(city: city),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.access_time),
+                    label: const Text('Почасовой прогноз'),
                   ),
                 ],
               ),
