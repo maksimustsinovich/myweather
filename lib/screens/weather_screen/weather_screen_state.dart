@@ -12,7 +12,7 @@ import 'package:syncfusion_flutter_gauges/gauges.dart';
 
 class WeatherScreenState extends State<WeatherScreen> {
   final String apiKey = '21cc003fb684d8f02f4fefabc56c390f';
-  String city = 'Paris';
+  String city = 'Minsk';
   Map<String, dynamic>? weatherData;
 
   final Color accentColor = Colors.blueAccent;
