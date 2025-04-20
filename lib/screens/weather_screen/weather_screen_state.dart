@@ -5,8 +5,9 @@ import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:myweather/helpers/weather_background_helper.dart';
 import 'package:myweather/helpers/weather_icon_helper.dart';
+import 'package:myweather/screens/city_picker_screen/city_picker_screen.dart';
 import 'package:myweather/screens/weather_screen/weather_screen.dart';
-
+import 'package:myweather/screens/hourly_forecast_screen.dart'; // Добавляем импорт для экрана с детальной погодой
 import 'package:myweather/services/city_storage_service.dart';
 import 'package:syncfusion_flutter_gauges/gauges.dart';
 
@@ -30,7 +31,7 @@ class WeatherScreenState extends State<WeatherScreen> {
         city = storedCity;
       });
     }
-    fetchWeatherData();
+    await fetchWeatherData();
   }
 
   Future<void> fetchWeatherData() async {
@@ -64,11 +65,39 @@ class WeatherScreenState extends State<WeatherScreen> {
     await fetchWeatherData();
   }
 
+  // Открыть экран выбора города и обновить прогноз
+  Future<void> _selectCity() async {
+    final selected = await Navigator.push<String>(
+      context,
+      MaterialPageRoute(builder: (_) => const CityPickerScreen()),
+    );
+    if (selected != null && selected.isNotEmpty && selected != city) {
+      setState(() {
+        city = selected;
+        weatherData = null;
+      });
+      await CityStorageService().saveCity(city);
+      await fetchWeatherData();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final weatherId = weatherData?['weather'][0]['id'] ?? 0;
 
     return Scaffold(
+      appBar: AppBar(
+        title: Text(city),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.location_city),
+            tooltip: 'Выбрать город',
+            onPressed: _selectCity,
+          ),
+        ],
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+      ),
       body: RefreshIndicator(
         onRefresh: _refreshWeatherData,
         child: Container(
@@ -82,35 +111,43 @@ class WeatherScreenState extends State<WeatherScreen> {
             padding: const EdgeInsets.only(top: 40.0),
             child: Padding(
               padding: const EdgeInsets.all(8.0),
-              child:
-                  weatherData == null
-                      ? const Center(child: CircularProgressIndicator())
-                      : Column(
-                        children: [
-                          _buildHeaderTile(),
-                          Expanded(
-                            flex: 1,
+              child: weatherData == null
+                  ? const Center(child: CircularProgressIndicator())
+                  : Column(
+                      children: [
+                        _buildHeaderTile(),
+                        Expanded(
+                          flex: 1,
+                          child: GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => HourlyForecastScreen(city: city),
+                                ),
+                              );
+                            },
                             child: GridView.builder(
                               gridDelegate:
                                   const SliverGridDelegateWithFixedCrossAxisCount(
-                                    crossAxisCount: 2,
-                                    crossAxisSpacing: 8.0,
-                                    mainAxisSpacing: 8.0,
-                                    childAspectRatio: 1.0,
-                                  ),
+                                crossAxisCount: 2,
+                                crossAxisSpacing: 8.0,
+                                mainAxisSpacing: 8.0,
+                                childAspectRatio: 1.0,
+                              ),
                               itemCount: widget.parameters.length,
                               itemBuilder: (context, index) {
                                 return _buildCustomWeatherTile(index);
                               },
                             ),
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
+                    ),
             ),
           ),
         ),
       ),
-      // bottomNavigationBar: _buildBottomPanel(),
     );
   }
 
@@ -343,21 +380,31 @@ class WeatherScreenState extends State<WeatherScreen> {
     return iconCode.endsWith('d');
   }
 
-  Widget _buildHeaderTile() {
-    final cityName = weatherData?['name'] ?? 'Город';
-    final date = _getFormattedDate(weatherData?['dt']);
-    final weatherDescription =
-        weatherData?['weather'][0]['description'] ?? 'Неизвестно';
-    final iconCode = weatherData?['weather'][0]['icon'] ?? '';
-    final isDayTime = _isDayTime(iconCode);
-    final weatherIcon = WeatherIconHelper.getWeatherIcon(
-      weatherData?['weather'][0]['id'],
-      isDayTime,
-    );
+Widget _buildHeaderTile() {
+  final cityName = weatherData?['name'] ?? 'Город';
+  final date = _getFormattedDate(weatherData?['dt']);
+  final weatherDescription =
+      weatherData?['weather'][0]['description'] ?? 'Неизвестно';
+  final iconCode = weatherData?['weather'][0]['icon'] ?? '';
+  final isDayTime = _isDayTime(iconCode);
+  final weatherIcon = WeatherIconHelper.getWeatherIcon(
+    weatherData?['weather'][0]['id'],
+    isDayTime,
+  );
 
-    return Card(
+  return GestureDetector(  // Оборачиваем карточку в GestureDetector
+    onTap: () {
+      // Переход на экран с детальной погодой для выбранного города
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => HourlyForecastScreen(city: cityName),
+        ),
+      );
+    },
+    child: Card(
       elevation: 4.0,
-      color: Colors.white.withValues(alpha: 0.7),
+      color: Colors.white.withOpacity(0.7),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -392,8 +439,9 @@ class WeatherScreenState extends State<WeatherScreen> {
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   String _getFormattedDate(int timestamp) {
     final dateTime = DateTime.fromMillisecondsSinceEpoch(timestamp * 1000);
