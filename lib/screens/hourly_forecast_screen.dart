@@ -12,7 +12,6 @@ import 'package:myweather/widgets/charts/custom_wind_chart.dart';
 
 class HourlyForecastScreen extends StatefulWidget {
   final String city;
-
   const HourlyForecastScreen({super.key, required this.city});
 
   @override
@@ -50,15 +49,12 @@ class _HourlyForecastScreenState extends State<HourlyForecastScreen> {
         loading = false;
       });
     } catch (e) {
-      print('Ошибка загрузки прогноза: $e');
+      debugPrint('Ошибка загрузки прогноза: $e');
     }
   }
 
-  List<HourlyWeather> _filterByDate(String date) {
-    return fullData
-        .where((item) => DateFormat('yyyy-MM-dd').format(item.time) == date)
-        .toList();
-  }
+  List<HourlyWeather> _filterByDate(String date) =>
+      fullData.where((item) => DateFormat('yyyy-MM-dd').format(item.time) == date).toList();
 
   double _maxTemp() =>
       filtered.map((e) => e.temperature).reduce((a, b) => a > b ? a : b);
@@ -93,7 +89,6 @@ class _HourlyForecastScreenState extends State<HourlyForecastScreen> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       const SizedBox(height: 12),
-                      // Блок выбора дат (с обновленным ForecastDaySelector)
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         child: Card(
@@ -113,11 +108,14 @@ class _HourlyForecastScreenState extends State<HourlyForecastScreen> {
                                   filtered = _filterByDate(newDate);
                                 });
                               },
-                              fullData: fullData, // передаем весь список почасовых данных
+                              fullData: fullData,
+                              city: widget.city,
+                              weatherId: weatherId,  // <-- передаём сюда
                             ),
                           ),
                         ),
                       ),
+                      const SizedBox(height: 16),
                       const SizedBox(height: 16),
                       _buildHeaderCard(),
                       const SizedBox(height: 16),
@@ -278,4 +276,5 @@ class _HourlyForecastScreenState extends State<HourlyForecastScreen> {
       ],
     );
   }
+  
 }

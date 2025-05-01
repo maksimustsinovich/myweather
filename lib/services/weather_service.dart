@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:myweather/models/daily_weather_model.dart';
 import 'package:myweather/models/hourly_weather_model.dart';
 
 class WeatherService {
@@ -22,4 +23,5 @@ Future<List<HourlyWeather>> fetchHourlyForecast(String city) async {
           'Ошибка загрузки прогноза: ${response.statusCode} — ${response.reasonPhrase}');
     }
   }
+
 }

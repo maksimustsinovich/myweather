@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:myweather/screens/city_picker_screen/city_picker_screen.dart';
+import 'package:myweather/screens/city_picker_screen/map_city_picker_screen.dart';
 import 'package:myweather/services/city_storage_service.dart';
 
 class CityPickerScreenState extends State<CityPickerScreen> {
-  final TextEditingController _controller = TextEditingController();
-  List<String> savedCities = [];
+  List<String> _cities = [];
 
   @override
   void initState() {
@@ -13,19 +13,51 @@ class CityPickerScreenState extends State<CityPickerScreen> {
   }
 
   Future<void> _loadCities() async {
-    final cities = await CityStorageService().loadCities();
-    setState(() {
-      savedCities = cities;
-    });
+    final list = await CityStorageService().loadCities();
+    if (!mounted) return;
+    setState(() => _cities = list);
+    // Если нет сохранённых городов, сразу открываем карту
+    if (_cities.isEmpty) {
+      _pickOnMap();
+    }
   }
 
-  Future<void> _addCity() async {
-    final city = _controller.text.trim();
-    if (city.isEmpty) return;
+  Future<void> _addCityManually() async {
+    final controller = TextEditingController();
+    final entered = await showDialog<String>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Добавить город'),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(hintText: 'Введите название города'),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Отмена')),
+          TextButton(
+            onPressed: () => Navigator.pop(context, controller.text.trim()),
+            child: const Text('Добавить'),
+          ),
+        ],
+      ),
+    );
+    if (entered?.isNotEmpty ?? false) {
+      await CityStorageService().saveCity(entered!);
+      _loadCities();
+    }
+  }
 
-    await CityStorageService().saveCity(city);
-    _controller.clear();
-    _loadCities();
+  Future<void> _pickOnMap() async {
+    final cityFromMap = await Navigator.push<String>(
+      context,
+      MaterialPageRoute(builder: (_) => const MapCityPickerScreen()),
+    );
+    if (cityFromMap != null && cityFromMap.isNotEmpty) {
+      await CityStorageService().saveCity(cityFromMap);
+      _loadCities();
+      // Закрываем экран выбора, возвращая город в WeatherScreen
+      Navigator.pop(context, cityFromMap);
+    }
   }
 
   Future<void> _deleteCity(String city) async {
@@ -40,52 +72,46 @@ class CityPickerScreenState extends State<CityPickerScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Выбор города')),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _controller,
-                    decoration: const InputDecoration(
-                      hintText: 'Введите название города',
-                      border: OutlineInputBorder(),
-                    ),
-                    onSubmitted: (_) => _addCity(),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                ElevatedButton(
-                  onPressed: _addCity,
-                  child: const Text('Добавить'),
-                ),
-              ],
-            ),
-          ),
-          const Divider(),
-          Expanded(
-            child: savedCities.isEmpty
-                ? const Center(child: Text('Список пуст'))
-                : ListView.builder(
-                    itemCount: savedCities.length,
-                    itemBuilder: (_, index) {
-                      final city = savedCities[index];
-                      return ListTile(
-                        title: Text(city),
-                        onTap: () => _selectCity(city),
-                        trailing: IconButton(
-                          icon: const Icon(Icons.delete, color: Colors.red),
-                          onPressed: () => _deleteCity(city),
-                        ),
-                      );
-                    },
-                  ),
+      appBar: AppBar(
+        title: const Text('Выбор города'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.map),
+            tooltip: 'Выбрать на карте',
+            onPressed: _pickOnMap,
           ),
         ],
       ),
+      body: _cities.isEmpty
+          ? Center(
+              child: ElevatedButton.icon(
+                icon: const Icon(Icons.map),
+                label: const Text('Добавить город на карте'),
+                onPressed: _pickOnMap,
+              ),
+            )
+          : ListView.separated(
+              itemCount: _cities.length,
+              separatorBuilder: (_, __) => const Divider(height: 1),
+              itemBuilder: (context, i) {
+                final city = _cities[i];
+                return ListTile(
+                  title: Text(city),
+                  onTap: () => _selectCity(city),
+                  trailing: IconButton(
+                    icon: const Icon(Icons.delete, color: Colors.redAccent),
+                    onPressed: () => _deleteCity(city),
+                  ),
+                );
+              },
+            ),
+      floatingActionButton: _cities.isEmpty
+          ? null
+          : FloatingActionButton(
+              onPressed: _addCityManually,
+              tooltip: 'Добавить город вручную',
+              child: const Icon(Icons.add),
+            ),
     );
   }
 }

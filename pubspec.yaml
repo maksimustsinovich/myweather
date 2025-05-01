@@ -44,6 +44,7 @@ dependencies:
   flutter_map: ^8.1.1
   shared_preferences: ^2.5.3
   syncfusion_flutter_gauges: ^29.1.37
+  flutter_typeahead: ^5.0.0
 
 
 dev_dependencies:
