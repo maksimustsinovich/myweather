@@ -7,7 +7,7 @@ import 'package:myweather/helpers/weather_background_helper.dart';
 import 'package:myweather/helpers/weather_icon_helper.dart';
 import 'package:myweather/screens/city_picker_screen/city_picker_screen.dart';
 import 'package:myweather/screens/weather_screen/weather_screen.dart';
-import 'package:myweather/screens/hourly_forecast_screen.dart'; // Добавляем импорт для экрана с детальной погодой
+import 'package:myweather/screens/hourly_forecast_screen.dart';
 import 'package:myweather/services/city_storage_service.dart';
 import 'package:syncfusion_flutter_gauges/gauges.dart';
 
@@ -108,42 +108,48 @@ class WeatherScreenState extends State<WeatherScreen> {
             ),
           ),
           child: Padding(
-            padding: const EdgeInsets.only(top: 40.0),
+            padding: const EdgeInsets.only(top: 0.0),
             child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: weatherData == null
-                  ? const Center(child: CircularProgressIndicator())
-                  : Column(
-                      children: [
-                        _buildHeaderTile(),
-                        Expanded(
-                          flex: 1,
-                          child: GestureDetector(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => HourlyForecastScreen(city: city),
-                                ),
-                              );
-                            },
-                            child: GridView.builder(
-                              gridDelegate:
-                                  const SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 2,
-                                crossAxisSpacing: 8.0,
-                                mainAxisSpacing: 8.0,
-                                childAspectRatio: 1.0,
-                              ),
-                              itemCount: widget.parameters.length,
-                              itemBuilder: (context, index) {
-                                return _buildCustomWeatherTile(index);
+              padding: const EdgeInsets.only(top: 8.0, left: 8.0, right: 8.0),
+              child:
+                  weatherData == null
+                      ? const Center(child: CircularProgressIndicator())
+                      : Column(
+                        children: [
+                          _buildHeaderTile(),
+                          Expanded(
+                            flex: 1,
+                            child: GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder:
+                                        (context) =>
+                                            HourlyForecastScreen(city: city),
+                                  ),
+                                );
                               },
+                              child: Padding(
+                                padding: EdgeInsets.only(top: 8.0),
+                                child: GridView.builder(
+                                  gridDelegate:
+                                      const SliverGridDelegateWithFixedCrossAxisCount(
+                                        crossAxisCount: 2,
+                                        crossAxisSpacing: 8.0,
+                                        mainAxisSpacing: 8.0,
+                                        childAspectRatio: 1.0,
+                                      ),
+                                  itemCount: widget.parameters.length,
+                                  itemBuilder: (context, index) {
+                                    return _buildCustomWeatherTile(index);
+                                  },
+                                ),
+                              ),
                             ),
                           ),
-                        ),
-                      ],
-                    ),
+                        ],
+                      ),
             ),
           ),
         ),
@@ -380,68 +386,71 @@ class WeatherScreenState extends State<WeatherScreen> {
     return iconCode.endsWith('d');
   }
 
-Widget _buildHeaderTile() {
-  final cityName = weatherData?['name'] ?? 'Город';
-  final date = _getFormattedDate(weatherData?['dt']);
-  final weatherDescription =
-      weatherData?['weather'][0]['description'] ?? 'Неизвестно';
-  final iconCode = weatherData?['weather'][0]['icon'] ?? '';
-  final isDayTime = _isDayTime(iconCode);
-  final weatherIcon = WeatherIconHelper.getWeatherIcon(
-    weatherData?['weather'][0]['id'],
-    isDayTime,
-  );
+  Widget _buildHeaderTile() {
+    final cityName = weatherData?['name'] ?? 'Город';
+    final date = _getFormattedDate(weatherData?['dt']);
+    final weatherDescription =
+        weatherData?['weather'][0]['description'] ?? 'Неизвестно';
+    final iconCode = weatherData?['weather'][0]['icon'] ?? '';
+    final isDayTime = _isDayTime(iconCode);
+    final weatherIcon = WeatherIconHelper.getWeatherIcon(
+      weatherData?['weather'][0]['id'],
+      isDayTime,
+    );
 
-  return GestureDetector(  // Оборачиваем карточку в GestureDetector
-    onTap: () {
-      // Переход на экран с детальной погодой для выбранного города
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => HourlyForecastScreen(city: cityName),
+    return GestureDetector(
+      // Оборачиваем карточку в GestureDetector
+      onTap: () {
+        // Переход на экран с детальной погодой для выбранного города
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => HourlyForecastScreen(city: cityName),
+          ),
+        );
+      },
+      child: Card(
+        elevation: 4.0,
+        color: Colors.white.withOpacity(0.7),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12.0),
         ),
-      );
-    },
-    child: Card(
-      elevation: 4.0,
-      color: Colors.white.withOpacity(0.7),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Icon(weatherIcon, size: 64, color: accentColor),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    cityName,
-                    style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                      color: accentColor,
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Icon(weatherIcon, size: 64, color: accentColor),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      cityName,
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: accentColor,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(date, style: const TextStyle(fontSize: 18)),
-                  const SizedBox(height: 8),
-                  Text(
-                    weatherDescription[0].toUpperCase() +
-                        weatherDescription.substring(1),
-                    style: TextStyle(fontSize: 16, color: Colors.grey[1000]),
-                  ),
-                ],
+                    const SizedBox(height: 4),
+                    Text(date, style: const TextStyle(fontSize: 18)),
+                    const SizedBox(height: 8),
+                    Text(
+                      weatherDescription[0].toUpperCase() +
+                          weatherDescription.substring(1),
+                      style: TextStyle(fontSize: 16, color: Colors.grey[1000]),
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   String _getFormattedDate(int timestamp) {
     final dateTime = DateTime.fromMillisecondsSinceEpoch(timestamp * 1000);
