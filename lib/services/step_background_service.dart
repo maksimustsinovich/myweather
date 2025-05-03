@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
-import 'package:flutter_background_service_android/flutter_background_service_android.dart';
 import 'package:pedometer/pedometer.dart';
 import 'package:myweather/services/db_helper.dart';
 

@@ -8,7 +8,7 @@ import 'dart:convert';
 import 'package:myweather/services/city_storage_service.dart';
 
 class MapCityPickerScreen extends StatefulWidget {
-  const MapCityPickerScreen({Key? key}) : super(key: key);
+  const MapCityPickerScreen({super.key});
 
   @override
   State<MapCityPickerScreen> createState() => MapCityPickerScreenState();

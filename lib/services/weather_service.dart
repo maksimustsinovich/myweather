@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:myweather/models/daily_weather_model.dart';
 import 'package:myweather/models/historic_weather.dart';
 import 'package:myweather/models/hourly_weather_model.dart';
 

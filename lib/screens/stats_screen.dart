@@ -5,7 +5,7 @@ import 'package:myweather/services/db_helper.dart';
 
 class StatsScreen extends StatefulWidget {
   final String currentWeather;
-  StatsScreen({super.key, required this.currentWeather});
+  const StatsScreen({super.key, required this.currentWeather});
 
   @override
   State<StatsScreen> createState() => _StatsScreenState();
