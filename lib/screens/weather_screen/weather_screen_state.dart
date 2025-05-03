@@ -5,17 +5,21 @@ import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:myweather/helpers/weather_background_helper.dart';
 import 'package:myweather/helpers/weather_icon_helper.dart';
+import 'package:myweather/models/day_stat.dart';
 import 'package:myweather/screens/city_picker_screen/city_picker_screen.dart';
+import 'package:myweather/screens/stats_screen.dart';
+import 'package:myweather/screens/hourly_forecast_screen.dart';
 import 'package:myweather/screens/weather_screen/weather_screen.dart';
 import 'package:myweather/screens/hourly_forecast_screen.dart';
 import 'package:myweather/services/city_storage_service.dart';
+import 'package:myweather/services/db_helper.dart';
+import 'package:myweather/services/weather_service.dart';
 import 'package:syncfusion_flutter_gauges/gauges.dart';
 
 class WeatherScreenState extends State<WeatherScreen> {
   final String apiKey = '21cc003fb684d8f02f4fefabc56c390f';
   String city = 'Minsk';
   Map<String, dynamic>? weatherData;
-
   final Color accentColor = Colors.blueAccent;
 
   @override
@@ -24,48 +28,61 @@ class WeatherScreenState extends State<WeatherScreen> {
     _loadCityAndFetchWeather();
   }
 
+  Future<void> _saveYesterdayStat() async {
+    if (weatherData == null) return;
+    final yesterday = DateTime.now().subtract(const Duration(days: 1));
+    final dateKey = DateFormat('yyyy-MM-dd').format(yesterday);
+    final stats = await DBHelper.fetchDailyStatsWithWeather();
+    final yesterdayStat = stats.firstWhere(
+      (s) => s.date == dateKey,
+      orElse: () => DayStat(date: dateKey, steps: 0, weather: '', temp: 0.0),
+    );
+    final stepsYesterday = yesterdayStat.steps;
+    final lat = (weatherData!['coord']['lat'] as num).toDouble();
+    final lon = (weatherData!['coord']['lon'] as num).toDouble();
+    final weatherInfo = await WeatherService().fetchHistoricWeather(
+      lat: lat,
+      lon: lon,
+      date: yesterday,
+    );
+    final stat = DayStat(
+      date: dateKey,
+      steps: stepsYesterday,
+      weather: weatherInfo.main,
+      temp: weatherInfo.temp,
+    );
+    await DBHelper.upsertStat(stat);
+  }
+
   Future<void> _loadCityAndFetchWeather() async {
     final storedCity = await CityStorageService().getLastCity();
-    if (storedCity != null) {
-      setState(() {
-        city = storedCity;
-      });
-    }
+    if (storedCity != null) setState(() => city = storedCity);
     await fetchWeatherData();
   }
 
   Future<void> fetchWeatherData() async {
     final url =
         'https://api.openweathermap.org/data/2.5/weather?q=$city&appid=$apiKey&units=metric&lang=ru';
-
     try {
       final response = await http.get(Uri.parse(url));
-      if (kDebugMode) {
-        print('📡 GET: $url');
-        print('🔢 Response: ${response.statusCode}');
-      }
+      if (kDebugMode) debugPrint('GET $url => ${response.statusCode}');
       if (response.statusCode == 200) {
-        setState(() {
-          weatherData = json.decode(response.body);
-        });
+        final data = json.decode(response.body) as Map<String, dynamic>;
+        setState(() => weatherData = data);
+        await _saveYesterdayStat();
       } else {
-        throw Exception('Ошибка загрузки данных');
+        throw Exception('Ошибка загрузки данных: ${response.statusCode}');
       }
     } catch (e) {
-      if (kDebugMode) {
-        print('❌ Exception: $e');
-      }
+      if (kDebugMode) debugPrint('Exception: $e');
     }
   }
 
   Future<void> _refreshWeatherData() async {
-    setState(() {
-      weatherData = null;
-    });
+    setState(() => weatherData = null);
     await fetchWeatherData();
   }
 
-  // Открыть экран выбора города и обновить прогноз
   Future<void> _selectCity() async {
     final selected = await Navigator.push<String>(
       context,
@@ -88,16 +105,76 @@ class WeatherScreenState extends State<WeatherScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(city),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.bar_chart),
+            tooltip: 'Статистика шагов',
+            onPressed: weatherData == null
+                ? null
+                : () {
+                    final mainWeather = weatherData!['weather'][0]['main'] as String;
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => StatsScreen(currentWeather: mainWeather),
+                      ),
+                    );
+                  },
+          ),
           IconButton(
             icon: const Icon(Icons.location_city),
             tooltip: 'Выбрать город',
             onPressed: _selectCity,
           ),
         ],
-        backgroundColor: Colors.transparent,
-        elevation: 0,
       ),
+      body: Stack(
+        children: [
+          // Фоновое изображение во весь экран
+          Positioned.fill(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                image: DecorationImage(
+                  image: WeatherBackgroundHelper.getBackgroundImage(weatherId),
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
+          ),
+          // Поверх фона — контент со скроллом и pull-to-refresh
+          RefreshIndicator(
+            onRefresh: _refreshWeatherData,
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.fromLTRB(16, 40, 16, 16),
+              child: weatherData == null
+                  ? const SizedBox(
+                      height: 200,
+                      child: Center(child: CircularProgressIndicator()),
+                    )
+                  : Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _buildHeaderTile(),
+                        const SizedBox(height: 16),
+                        GridView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            crossAxisSpacing: 8,
+                            mainAxisSpacing: 8,
+                            childAspectRatio: 1,
+                          ),
+                          itemCount: widget.parameters.length,
+                          itemBuilder: (context, index) =>
+                              _buildCustomWeatherTile(index),
+                        ),
+                      ],
+                    ),
       body: RefreshIndicator(
         onRefresh: _refreshWeatherData,
         child: Container(
@@ -152,10 +229,11 @@ class WeatherScreenState extends State<WeatherScreen> {
                       ),
             ),
           ),
-        ),
+        ],
       ),
     );
   }
+
 
   Widget _buildCustomWeatherTile(int index) {
     final parameter = widget.parameters[index];
