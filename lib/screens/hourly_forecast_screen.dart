@@ -6,13 +6,13 @@ import 'package:myweather/models/hourly_weather_model.dart';
 import 'package:myweather/services/weather_service.dart';
 import 'package:myweather/widgets/forecast_day_selector.dart';
 import 'package:myweather/widgets/hourly_weather_tile.dart';
-
 import 'package:myweather/widgets/charts/custom_hourly_weather_chart.dart';
 import 'package:myweather/widgets/charts/custom_pressure_chart.dart';
 import 'package:myweather/widgets/charts/custom_wind_chart.dart';
 
 class HourlyForecastScreen extends StatefulWidget {
   final String city;
+
   const HourlyForecastScreen({super.key, required this.city});
 
   @override
@@ -36,11 +36,12 @@ class _HourlyForecastScreenState extends State<HourlyForecastScreen> {
     try {
       final service = WeatherService();
       final result = await service.fetchHourlyForecast(widget.city);
-      final allDates = result
-          .map((e) => DateFormat('yyyy-MM-dd').format(e.time))
-          .toSet()
-          .toList()
-        ..sort();
+      final allDates =
+          result
+              .map((e) => DateFormat('yyyy-MM-dd').format(e.time))
+              .toSet()
+              .toList()
+            ..sort();
 
       setState(() {
         fullData = result;
@@ -55,7 +56,9 @@ class _HourlyForecastScreenState extends State<HourlyForecastScreen> {
   }
 
   List<HourlyWeather> _filterByDate(String date) =>
-      fullData.where((item) => DateFormat('yyyy-MM-dd').format(item.time) == date).toList();
+      fullData
+          .where((item) => DateFormat('yyyy-MM-dd').format(item.time) == date)
+          .toList();
 
   double _maxTemp() =>
       filtered.map((e) => e.temperature).reduce((a, b) => a > b ? a : b);
@@ -63,96 +66,96 @@ class _HourlyForecastScreenState extends State<HourlyForecastScreen> {
   double _minTemp() =>
       filtered.map((e) => e.temperature).reduce((a, b) => a < b ? a : b);
 
-  // Helper to detect day/night from icon code
   bool _isDayTime(String iconCode) => iconCode.endsWith('d');
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context); // Получаем текущую тему
     final weatherId = filtered.isNotEmpty ? filtered[0].weatherCode : 800;
 
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: Text(
-          'Прогноз — ${widget.city}',
-          style: const TextStyle(color: Colors.black87),
-        ),
+        title: Text('Прогноз', style: theme.textTheme.titleLarge),
         backgroundColor: Colors.white,
         elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.black87),
+        iconTheme: const IconThemeData(color: Colors.blueAccent),
       ),
-      body: loading
-          ? const Center(child: CircularProgressIndicator())
-          : Container(
-              decoration: BoxDecoration(
-                image: DecorationImage(
-                  image: WeatherBackgroundHelper.getBackgroundImage(weatherId),
-                  fit: BoxFit.cover,
+      body:
+          loading
+              ? const Center(child: CircularProgressIndicator())
+              : Container(
+                decoration: BoxDecoration(
+                  // image: DecorationImage(
+                  //   image: WeatherBackgroundHelper.getBackgroundImage(
+                  //     weatherId,
+                  //   ),
+                  //   fit: BoxFit.cover,
+                  // ),
+                  color: Colors.blueAccent,
                 ),
-              ),
-              child: SafeArea(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.only(bottom: 24),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      const SizedBox(height: 12),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: Card(
-                          color: Colors.white.withOpacity(0.5),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          elevation: 0,
-                          child: Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: ForecastDaySelector(
-                              dates: dates,
-                              selectedDate: selectedDate,
-                              onSelect: (newDate) {
-                                setState(() {
-                                  selectedDate = newDate;
-                                  filtered = _filterByDate(newDate);
-                                });
-                              },
-                              fullData: fullData,
-                              city: widget.city,
-                              weatherId: weatherId,
+                child: SafeArea(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.only(bottom: 24),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const SizedBox(height: 12),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: Card(
+                            color: Colors.white.withOpacity(0.7),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            elevation: 0,
+                            child: Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: ForecastDaySelector(
+                                dates: dates,
+                                selectedDate: selectedDate,
+                                onSelect: (newDate) {
+                                  setState(() {
+                                    selectedDate = newDate;
+                                    filtered = _filterByDate(newDate);
+                                  });
+                                },
+                                fullData: fullData,
+                                city: widget.city,
+                                weatherId: weatherId,
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                      const SizedBox(height: 16),
-                      const SizedBox(height: 16),
-                      _buildHeaderCard(),
-                      const SizedBox(height: 16),
-                      _buildHourlyList(),
-                      const SizedBox(height: 16),
-                      // График температуры
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: CustomHourlyWeatherChart(data: filtered),
-                      ),
-                      const SizedBox(height: 12),
-                      // График давления
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: CustomPressureChart(data: filtered),
-                      ),
-                      const SizedBox(height: 12),
-                      // График ветра
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: CustomWindChart(data: filtered),
-                      ),
-                      const SizedBox(height: 16),
-                      _buildSummaryCard(),
-                    ],
+                        const SizedBox(height: 16),
+                        _buildHeaderCard(theme),
+                        const SizedBox(height: 16),
+                        Padding(
+                          padding: EdgeInsets.only(left: 10, right: 10),
+                          child: _buildHourlyList(),
+                        ),
+                        const SizedBox(height: 16),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: CustomHourlyWeatherChart(data: filtered),
+                        ),
+                        const SizedBox(height: 12),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: CustomPressureChart(data: filtered),
+                        ),
+                        const SizedBox(height: 12),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: CustomWindChart(data: filtered),
+                        ),
+                        const SizedBox(height: 16),
+                        _buildSummaryCard(theme),
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
     );
   }
 
@@ -167,9 +170,8 @@ class _HourlyForecastScreenState extends State<HourlyForecastScreen> {
     );
   }
 
-  Widget _buildHeaderCard() {
+  Widget _buildHeaderCard(ThemeData theme) {
     if (filtered.isEmpty) return const SizedBox.shrink();
-
     final now = filtered[0];
     final isDay = _isDayTime(now.icon);
     final iconData = WeatherIconHelper.getWeatherIcon(now.weatherCode, isDay);
@@ -177,7 +179,7 @@ class _HourlyForecastScreenState extends State<HourlyForecastScreen> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Card(
-        color: Colors.white.withOpacity(0.6),
+        color: Colors.white.withOpacity(0.7),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         elevation: 2,
         child: Padding(
@@ -187,7 +189,9 @@ class _HourlyForecastScreenState extends State<HourlyForecastScreen> {
             children: [
               Text(
                 DateFormat('d MMMM, EEEE', 'ru').format(now.time),
-                style: const TextStyle(fontSize: 16, color: Colors.black87),
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: Colors.black87,
+                ),
               ),
               const SizedBox(height: 8),
               Row(
@@ -195,24 +199,29 @@ class _HourlyForecastScreenState extends State<HourlyForecastScreen> {
                 children: [
                   Text(
                     '${now.temperature.round()}°C',
-                    style: const TextStyle(
-                        fontSize: 48,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87),
+                    style: theme.textTheme.displayLarge?.copyWith(
+                      fontSize: 48,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
                   ),
                   const SizedBox(width: 12),
-                  Icon(iconData, size: 50, color: Colors.black87),
+                  Icon(iconData, size: 50, color: Colors.blueAccent),
                 ],
               ),
               const SizedBox(height: 8),
               Text(
                 'Ощущается как ${now.feelsLike.round()}°C',
-                style: const TextStyle(fontSize: 16, color: Colors.black87),
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: Colors.black87,
+                ),
               ),
               const SizedBox(height: 4),
               Text(
                 '${now.description[0].toUpperCase()}${now.description.substring(1)}',
-                style: const TextStyle(fontSize: 16, color: Colors.black87),
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: Colors.black87,
+                ),
               ),
             ],
           ),
@@ -221,9 +230,8 @@ class _HourlyForecastScreenState extends State<HourlyForecastScreen> {
     );
   }
 
-  Widget _buildSummaryCard() {
+  Widget _buildSummaryCard(ThemeData theme) {
     if (filtered.isEmpty) return const SizedBox.shrink();
-
     final now = filtered[0];
 
     return Padding(
@@ -236,27 +244,27 @@ class _HourlyForecastScreenState extends State<HourlyForecastScreen> {
           padding: const EdgeInsets.all(16.0),
           child: Column(
             children: [
-              const Text(
+              Text(
                 'Подробности',
-                style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 18,
-                    color: Colors.black87),
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
               ),
               const SizedBox(height: 12),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  _metricCard('Давление', '${now.pressure} гПа'),
-                  _metricCard('Ветер', '${now.windSpeed.round()} м/с'),
+                  _metricCard('Давление', '${now.pressure} гПа', theme),
+                  _metricCard('Ветер', '${now.windSpeed.round()} м/с', theme),
                 ],
               ),
               const SizedBox(height: 8),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  _metricCard('Макс.', '${_maxTemp().round()}°'),
-                  _metricCard('Мин.', '${_minTemp().round()}°'),
+                  _metricCard('Макс.', '${_maxTemp().round()}°', theme),
+                  _metricCard('Мин.', '${_minTemp().round()}°', theme),
                 ],
               ),
             ],
@@ -266,18 +274,20 @@ class _HourlyForecastScreenState extends State<HourlyForecastScreen> {
     );
   }
 
-  Widget _metricCard(String label, String value) {
+  Widget _metricCard(String label, String value, ThemeData theme) {
     return Column(
       children: [
         Text(
           label,
-          style: const TextStyle(fontSize: 14, color: Colors.black87),
+          style: theme.textTheme.bodySmall?.copyWith(color: Colors.black87),
         ),
         const SizedBox(height: 4),
         Text(
           value,
-          style: const TextStyle(
-              fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87),
+          style: theme.textTheme.bodyMedium?.copyWith(
+            fontWeight: FontWeight.bold,
+            color: Colors.black87,
+          ),
         ),
       ],
     );

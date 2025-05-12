@@ -1,9 +1,8 @@
-// lib/screens/city_picker_screen/map_city_picker_screen.dart
-
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:http/http.dart' as http;
+import 'package:myweather/models/city_location.dart';
 import 'dart:convert';
 import 'package:myweather/services/city_storage_service.dart';
 
@@ -32,8 +31,7 @@ class MapCityPickerScreenState extends State<MapCityPickerScreen> {
       return;
     }
     final uri = Uri.parse(
-      'https://nominatim.openstreetmap.org/search'
-      '?format=json&q=$query&addressdetails=1&limit=5',
+      'https://nominatim.openstreetmap.org/search?format=json&q= $query&addressdetails=1&limit=5',
     );
     final resp = await http.get(uri, headers: {'User-Agent': 'myweather-app'});
     final List data = jsonDecode(resp.body);
@@ -41,17 +39,23 @@ class MapCityPickerScreenState extends State<MapCityPickerScreen> {
   }
 
   /// Обратное геокодирование для получения названия города
-  Future<String?> _reverseGeocode(LatLng pos) async {
+  Future<CityLocation?> _reverseGeocode(LatLng pos) async {
     final uri = Uri.parse(
-      'https://nominatim.openstreetmap.org/reverse'
-      '?format=json&lat=${pos.latitude}&lon=${pos.longitude}&addressdetails=1',
+      'https://nominatim.openstreetmap.org/reverse?format=json&lat= ${pos.latitude}&lon=${pos.longitude}&addressdetails=1',
     );
     final resp = await http.get(uri, headers: {'User-Agent': 'myweather-app'});
     final json = jsonDecode(resp.body);
-    return json['address']['city']
-        ?? json['address']['town']
-        ?? json['address']['village']
-        ?? json['display_name'];
+
+    final city =
+        json['address']['city'] ??
+        json['address']['town'] ??
+        json['address']['village'] ??
+        json['display_name'];
+
+    if (city != null) {
+      return CityLocation(name: city, lat: pos.latitude, lon: pos.longitude);
+    }
+    return null;
   }
 
   /// Ставит маркер и перемещает карту
@@ -76,26 +80,33 @@ class MapCityPickerScreenState extends State<MapCityPickerScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Найти город на карте')),
+      appBar: AppBar(
+        title: Text('Найти город на карте', style: theme.textTheme.titleLarge),
+        leading: const BackButton(color: Colors.blueAccent),
+      ),
       body: Column(
         children: [
-          // 1) Поисковое поле
+          // Поисковое поле
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: TextField(
               controller: _searchCtrl,
               decoration: InputDecoration(
                 hintText: 'Найдите город или район',
+                hintStyle: theme.textTheme.bodyMedium,
                 prefixIcon: const Icon(Icons.search),
-                border:
-                    OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
               ),
               onChanged: _onSearchChanged,
             ),
           ),
 
-          // 2) Список подсказок
+          // Список подсказок
           if (_suggestions.isNotEmpty)
             Container(
               height: 200,
@@ -110,7 +121,10 @@ class MapCityPickerScreenState extends State<MapCityPickerScreen> {
                 itemBuilder: (context, i) {
                   final sug = _suggestions[i];
                   return ListTile(
-                    title: Text(sug['display_name']),
+                    title: Text(
+                      sug['display_name'],
+                      style: theme.textTheme.bodyMedium,
+                    ),
                     onTap: () {
                       final lat = double.parse(sug['lat']);
                       final lon = double.parse(sug['lon']);
@@ -123,7 +137,7 @@ class MapCityPickerScreenState extends State<MapCityPickerScreen> {
               ),
             ),
 
-          // 3) Карта
+          // Карта
           Expanded(
             child: FlutterMap(
               mapController: _mapController,
@@ -133,9 +147,9 @@ class MapCityPickerScreenState extends State<MapCityPickerScreen> {
                 onPositionChanged: (pos, _) {
                   _currentZoom = pos.zoom ?? _currentZoom;
                 },
-                onTap: (_, tapPos) => _setMarker(
-                  LatLng(tapPos.latitude, tapPos.longitude),
-                ),
+                onTap:
+                    (_, tapPos) =>
+                        _setMarker(LatLng(tapPos.latitude, tapPos.longitude)),
               ),
               children: [
                 TileLayer(
@@ -147,20 +161,21 @@ class MapCityPickerScreenState extends State<MapCityPickerScreen> {
             ),
           ),
 
-          // 4) Сохранить город
+          // Кнопка "Сохранить"
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: ElevatedButton(
-              onPressed: _marker == null
-                  ? null
-                  : () async {
-                      final city = await _reverseGeocode(_marker!.point);
-                      if (city != null && mounted) {
-                        await CityStorageService().saveCity(city);
-                        Navigator.pop(context, city);
-                      }
-                    },
-              child: const Text('Сохранить город'),
+              onPressed:
+                  _marker == null
+                      ? null
+                      : () async {
+                        final location = await _reverseGeocode(_marker!.point);
+                        if (location != null && mounted) {
+                          await CityStorageService().saveCity(location);
+                          Navigator.of(context).pop(location);
+                        }
+                      },
+              child: Text('Сохранить город', style: theme.textTheme.bodyMedium),
             ),
           ),
         ],

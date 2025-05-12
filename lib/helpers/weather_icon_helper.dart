@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:myweather/consts/weather_conditions.dart';
+import 'package:syncfusion_flutter_gauges/gauges.dart';
 import 'package:weather_icons/weather_icons.dart';
 
 class WeatherIconHelper {
@@ -59,10 +60,10 @@ class WeatherIconHelper {
 
     // Group 7xx: Atmosphere
     if (weatherId == WeatherConstants.mist) {
-      return isDaytime ? WeatherIcons.day_haze : WeatherIcons.fog; 
+      return isDaytime ? WeatherIcons.day_haze : WeatherIcons.fog;
     }
     if (weatherId == WeatherConstants.smoke) {
-      return WeatherIcons.smoke; 
+      return WeatherIcons.smoke;
     }
     if (weatherId == WeatherConstants.haze) {
       return isDaytime ? WeatherIcons.day_haze : WeatherIcons.fog;
@@ -74,7 +75,7 @@ class WeatherIconHelper {
       return WeatherIcons.fog;
     }
     if (weatherId == WeatherConstants.sand) {
-      return WeatherIcons.sandstorm; 
+      return WeatherIcons.sandstorm;
     }
     if (weatherId == WeatherConstants.dust) {
       return WeatherIcons.dust;
@@ -83,7 +84,7 @@ class WeatherIconHelper {
       return WeatherIcons.volcano;
     }
     if (weatherId == WeatherConstants.squalls) {
-      return WeatherIcons.strong_wind; 
+      return WeatherIcons.strong_wind;
     }
     if (weatherId == WeatherConstants.tornado) {
       return WeatherIcons.tornado;
@@ -109,5 +110,37 @@ class WeatherIconHelper {
     }
 
     return WeatherIcons.na;
+  }
+
+  static void labelCreated(AxisLabelCreatedArgs args) {
+    if (args.text == '360' || args.text == '0') {
+      args.text = 'С';
+    } else if (args.text == '45') {
+      args.text = 'С-В';
+    } else if (args.text == '90') {
+      args.text = 'В';
+    } else if (args.text == '135') {
+      args.text = 'Ю-В';
+    } else if (args.text == '180') {
+      args.text = 'Ю';
+    } else if (args.text == '225') {
+      args.text = 'Ю-З';
+    } else if (args.text == '270') {
+      args.text = 'З';
+    } else if (args.text == '315') {
+      args.text = 'С-З';
+    }
+  }
+
+  static String getWindDirectionText(int degrees) {
+    if (degrees >= 337.5 || degrees < 22.5) return 'С';
+    if (degrees >= 22.5 && degrees < 67.5) return 'С-В';
+    if (degrees >= 67.5 && degrees < 112.5) return 'В';
+    if (degrees >= 112.5 && degrees < 157.5) return 'Ю-В';
+    if (degrees >= 157.5 && degrees < 202.5) return 'Ю';
+    if (degrees >= 202.5 && degrees < 247.5) return 'Ю-З';
+    if (degrees >= 247.5 && degrees < 292.5) return 'З';
+    if (degrees >= 292.5 && degrees < 337.5) return 'С-З';
+    return 'Неизвестно';
   }
 }

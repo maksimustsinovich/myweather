@@ -49,8 +49,8 @@ dependencies:
   pedometer: ^4.1.1     
   sqflite: ^2.2.5+3      
   path_provider: ^2.0.15
-  flutter_background_service: ^2.4.0
-  flutter_background_service_android: ^2.4.0
+  flutter_background_service: ^5.1.0
+  flutter_background_service_android: ^6.3.0
 
 
 dev_dependencies:
@@ -81,13 +81,7 @@ flutter:
   #   - images/a_dot_ham.jpeg
   assets:
     - assets/compass.png
-    - assets/images/clear.jpg
-    - assets/images/cloud.jpg
-    - assets/images/drizzle.jpg
-    - assets/images/fog.jpg
-    - assets/images/rain.jpg
-    - assets/images/snow.jpg
-    - assets/images/thunderstorm.jpg
+    - assets/images/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
