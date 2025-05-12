@@ -6,7 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:myweather/helpers/weather_background_helper.dart';
 import 'package:myweather/helpers/weather_icon_helper.dart';
 import 'package:myweather/models/day_stat.dart';
-import 'package:myweather/screens/city_picker_screen/city_picker_screen.dart';
+import 'package:myweather/screens/city_picker_screen/city_picker_screen_state.dart';
 import 'package:myweather/screens/stats_screen.dart';
 import 'package:myweather/screens/hourly_forecast_screen.dart';
 import 'package:myweather/screens/weather_screen/weather_screen.dart';

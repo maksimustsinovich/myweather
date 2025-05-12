@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:myweather/helpers/weather_background_helper.dart';
+import 'package:myweather/helpers/weather_icon_helper.dart';
 import 'package:myweather/models/hourly_weather_model.dart';
 import 'package:myweather/services/weather_service.dart';
 import 'package:myweather/widgets/forecast_day_selector.dart';
@@ -62,6 +63,9 @@ class _HourlyForecastScreenState extends State<HourlyForecastScreen> {
   double _minTemp() =>
       filtered.map((e) => e.temperature).reduce((a, b) => a < b ? a : b);
 
+  // Helper to detect day/night from icon code
+  bool _isDayTime(String iconCode) => iconCode.endsWith('d');
+
   @override
   Widget build(BuildContext context) {
     final weatherId = filtered.isNotEmpty ? filtered[0].weatherCode : 800;
@@ -69,9 +73,13 @@ class _HourlyForecastScreenState extends State<HourlyForecastScreen> {
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: Text('Прогноз — ${widget.city}'),
-        backgroundColor: Colors.transparent,
+        title: Text(
+          'Прогноз — ${widget.city}',
+          style: const TextStyle(color: Colors.black87),
+        ),
+        backgroundColor: Colors.white,
         elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.black87),
       ),
       body: loading
           ? const Center(child: CircularProgressIndicator())
@@ -92,7 +100,7 @@ class _HourlyForecastScreenState extends State<HourlyForecastScreen> {
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         child: Card(
-                          color: Colors.white.withOpacity(0.2),
+                          color: Colors.white.withOpacity(0.5),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(20),
                           ),
@@ -110,7 +118,7 @@ class _HourlyForecastScreenState extends State<HourlyForecastScreen> {
                               },
                               fullData: fullData,
                               city: widget.city,
-                              weatherId: weatherId,  // <-- передаём сюда
+                              weatherId: weatherId,
                             ),
                           ),
                         ),
@@ -163,11 +171,13 @@ class _HourlyForecastScreenState extends State<HourlyForecastScreen> {
     if (filtered.isEmpty) return const SizedBox.shrink();
 
     final now = filtered[0];
+    final isDay = _isDayTime(now.icon);
+    final iconData = WeatherIconHelper.getWeatherIcon(now.weatherCode, isDay);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Card(
-        color: Colors.white.withOpacity(0.3),
+        color: Colors.white.withOpacity(0.6),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         elevation: 2,
         child: Padding(
@@ -191,11 +201,7 @@ class _HourlyForecastScreenState extends State<HourlyForecastScreen> {
                         color: Colors.black87),
                   ),
                   const SizedBox(width: 12),
-                  Image.network(
-                    'https://openweathermap.org/img/wn/${now.icon}@2x.png',
-                    width: 50,
-                    height: 50,
-                  ),
+                  Icon(iconData, size: 50, color: Colors.black87),
                 ],
               ),
               const SizedBox(height: 8),
@@ -223,7 +229,7 @@ class _HourlyForecastScreenState extends State<HourlyForecastScreen> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Card(
-        color: Colors.white.withOpacity(0.3),
+        color: Colors.white.withOpacity(0.6),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         elevation: 2,
         child: Padding(
@@ -271,10 +277,9 @@ class _HourlyForecastScreenState extends State<HourlyForecastScreen> {
         Text(
           value,
           style: const TextStyle(
-              fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black),
+              fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87),
         ),
       ],
     );
   }
-  
 }

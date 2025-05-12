@@ -1,7 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:myweather/screens/city_picker_screen/city_picker_screen.dart';
 import 'package:myweather/screens/city_picker_screen/map_city_picker_screen.dart';
 import 'package:myweather/services/city_storage_service.dart';
+
+class CityPickerScreen extends StatefulWidget {
+  const CityPickerScreen({Key? key}) : super(key: key);
+
+  @override
+  State<CityPickerScreen> createState() => CityPickerScreenState();
+}
 
 class CityPickerScreenState extends State<CityPickerScreen> {
   List<String> _cities = [];

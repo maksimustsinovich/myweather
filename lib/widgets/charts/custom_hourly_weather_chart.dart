@@ -18,7 +18,7 @@ class CustomHourlyWeatherChart extends StatelessWidget {
     }
 
     return Card(
-      color: Colors.white.withOpacity(0.3),
+      color: Colors.white.withOpacity(0.6),
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
